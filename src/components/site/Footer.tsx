@@ -1,18 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { LOGO_URL, SUPPORT_PHONE } from "@/lib/site";
+import { LOGO_URL } from "@/lib/site";
 import { useSite } from "./site-context";
 
 export function Footer() {
-  const { openWithdraw, openContact } = useSite();
+  const { openWithdraw } = useSite();
 
   return (
     <footer className="brand-surface mt-8 px-4 pb-8 pt-6">
-      <div className="mx-auto grid max-w-3xl gap-6 sm:grid-cols-3">
-        <div className="space-y-2">
+      <div className="mx-auto grid max-w-3xl gap-6 sm:grid-cols-2">
+        <div className="space-y-3">
           <img
             src={LOGO_URL}
-            alt="BetaShine"
-            className="size-12 rounded-full border border-teal/50 object-cover"
+            alt="BETASHINE — Connect, Learn, Earn"
+            className="h-20 w-auto max-w-full rounded-xl object-contain object-left"
           />
           <p className="text-sm text-brand-foreground/70">
             Connect, Learn, Earn.
@@ -25,31 +25,11 @@ export function Footer() {
 
         <div>
           <h4 className="mb-2 text-sm font-extrabold text-teal">Quick Links</h4>
-          <ul className="space-y-1.5 text-sm text-brand-foreground/70">
-            <li>
-              <Link to="/">🏠 Home</Link>
-            </li>
-            <li>
-              <Link to="/register">📝 Jisajili</Link>
-            </li>
-            <li>
-              <button onClick={openWithdraw}>💰 Withdraw</button>
-            </li>
-            <li>
-              <button onClick={openContact}>💬 Contact Us</button>
-            </li>
+          <ul className="space-y-2 text-sm text-brand-foreground/70">
+            <li><Link to="/">🏠 Home</Link></li>
+            <li><Link to="/register">📝 Jisajili</Link></li>
+            <li><button onClick={openWithdraw}>💰 Withdraw</button></li>
           </ul>
-        </div>
-
-        <div>
-          <h4 className="mb-2 text-sm font-extrabold text-teal">Contact</h4>
-          <p className="text-sm text-brand-foreground/70">
-            📱{" "}
-            <button onClick={openContact} className="underline">
-              Contact Options
-            </button>
-          </p>
-          <p className="text-sm text-brand-foreground/70">{SUPPORT_PHONE}</p>
         </div>
       </div>
 

@@ -3,11 +3,13 @@ import { useState } from "react";
 import { z } from "zod";
 import { SiteShell } from "@/components/site/site-context";
 import { supabase } from "@/integrations/supabase/client";
+import { SITE_URL, SEO_KEYWORDS } from "@/lib/site";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
-      { title: "Jisajili — BETASHINE ORIGINAL" },
+      { title: "Jisajili — BETASHINE" },
+      { name: "keywords", content: SEO_KEYWORDS },
       {
         name: "description",
         content:
@@ -22,6 +24,7 @@ export const Route = createFileRoute("/register")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/register` }],
   }),
   component: RegisterPage,
 });
@@ -67,7 +70,6 @@ function RegisterPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
 
   const set = (key: keyof Values) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setValues((v) => ({ ...v, [key]: e.target.value }));
@@ -95,7 +97,7 @@ function RegisterPage() {
     const { data: signUp, error } = await supabase.auth.signUp({
       email: `${username}@betashine.app`,
       password: data.password,
-      options: { data: { full_name: data.fullName, username } },
+      options: { data: { full_name: data.fullName, username, phone: data.phone, county: data.county } },
     });
 
     if (error) {
@@ -108,52 +110,9 @@ function RegisterPage() {
       return;
     }
 
-    const userId = signUp.user?.id;
-    if (userId) {
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: userId,
-        full_name: data.fullName,
-        username,
-        phone: data.phone,
-        county: data.county,
-      });
-      if (profileError) {
-        setLoading(false);
-        setFormError(
-          /duplicate|unique/i.test(profileError.message)
-            ? "Username au namba ya simu imetumika tayari."
-            : "Taarifa zako hazikuhifadhiwa. Jaribu tena.",
-        );
-        return;
-      }
-    }
-
     setLoading(false);
     setValues(EMPTY);
-    setDone(true);
-  }
-
-  if (done) {
-    return (
-      <SiteShell>
-        <div className="mx-auto max-w-md px-4 py-10">
-          <div className="rounded-2xl bg-card p-6 text-center shadow-card">
-            <div className="text-5xl">🎉</div>
-            <h1 className="mt-3 text-2xl font-bold">Umefanikiwa kujisajili!</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Taarifa zako zimehifadhiwa salama. Timu yetu itakuwasiliana kwa
-              namba uliyoandika ili kuanza mazungumzo yako ya kwanza.
-            </p>
-            <Link
-              to="/"
-              className="cta-glow mt-6 block rounded-xl bg-primary px-4 py-3 font-extrabold text-primary-foreground"
-            >
-              🔙 Rudi Nyumbani
-            </Link>
-          </div>
-        </div>
-      </SiteShell>
-    );
+    navigate({ to: "/payment" });
   }
 
   return (

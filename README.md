@@ -1,6 +1,6 @@
 # Website Magic
 
-Nitengenezee hii website yangu, nataka nirekebishie folder langu lifunguke kama hii link https://betashine.org/
+Nitengenezee hii website yangu, nataka nirekebishie folder langu lifunguke kama hii link https://betashineorg.online/
 
 Nataka button ya Jisajili itampeleka user kwenye form ya kujisajili atajaza taarifa zake ma zitakua saved kwenye database
 

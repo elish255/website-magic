@@ -1,26 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site/site-context";
 import { buildFeed, todayLabel } from "@/data/profiles";
-import { USD_RATE } from "@/lib/site";
+import { SITE_URL, SEO_KEYWORDS, USD_RATE } from "@/lib/site";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BETASHINE ORIGINAL — Pata mapato kwa kuchat na wageni" },
-      {
-        name: "description",
-        content:
-          "BETASHINE ORIGINAL ni jukwaa linalowapa Watanzania fursa ya kupata mapato kwa kuzungumza na wageni. Jisajili, ongana na wageni, na upate TZS 21,000 hadi 33,000 kwa kila mzungu.",
-      },
-      { property: "og:title", content: "BETASHINE ORIGINAL" },
-      {
-        property: "og:description",
-        content:
-          "Jisajili, ongana na wageni, pata TZS 21,000 hadi 33,000 kwa kila mazungumzo.",
-      },
+      { title: "BETASHINE — Betashine Org | Connect, Learn, Earn" },
+      { name: "description", content: "BETASHINE (Betashine Org) ni jukwaa la Connect, Learn, Earn. Chat na foreigners, shiriki Kiswahili na utamaduni, na pata mapato kwa muda wako." },
+      { name: "keywords", content: SEO_KEYWORDS },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
+      { property: "og:title", content: "BETASHINE — Betashine Org" },
+      { property: "og:description", content: "Connect, Learn, Earn. Chat na foreigners na pata mapato." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:image", content: `${SITE_URL}/betashine-logo.jpg` },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "BETASHINE — Betashine Org" },
+      { name: "twitter:description", content: "Connect, Learn, Earn." },
+      { name: "twitter:image", content: `${SITE_URL}/betashine-logo.jpg` },
     ],
+    links: [{ rel: "canonical", href: SITE_URL }],
   }),
   component: Home,
 });
@@ -31,10 +31,10 @@ function Home() {
 
   return (
     <SiteShell>
-      <section className="brand-surface px-4 py-6 text-center">
-        <p className="text-base font-bold">
-          🌍 Foreigners are ready to pay for your time
-        </p>
+      <section className="brand-surface px-4 py-7 text-center">
+        <h1 className="text-3xl font-black tracking-tight sm:text-4xl">BETASHINE</h1>
+        <p className="mt-1 text-sm font-bold text-teal">Betashine Org · Connect, Learn, Earn.</p>
+        <p className="mt-3 text-base font-bold">🌍 Foreigners are ready to pay for your time</p>
         <p className="mt-2 text-2xl font-extrabold text-teal">
           make atleast TZS 50,000 up to TZS 100,000 per day
         </p>

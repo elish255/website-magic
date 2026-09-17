@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { SiteShell } from "@/components/site/site-context";
 import { getProfile } from "@/data/profiles";
+import { SITE_URL, SEO_KEYWORDS } from "@/lib/site";
 
 export const Route = createFileRoute("/chat/$name")({
   head: ({ params }) => ({
     meta: [
-      { title: `Chat na ${params.name} — BETASHINE ORIGINAL` },
+      { title: `Chat na ${params.name} — BETASHINE` },
+      { name: "keywords", content: SEO_KEYWORDS },
       {
         name: "description",
         content: `Chat na ${params.name} kwenye BetaShine na upate malipo kwa muda uliopangwa.`,
@@ -17,7 +20,9 @@ export const Route = createFileRoute("/chat/$name")({
       },
       { property: "og:type", content: "profile" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: `${SITE_URL}/chat/${encodeURIComponent(params.name)}` },
     ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/chat/${encodeURIComponent(params.name)}` }],
   }),
   component: ChatPage,
 });
@@ -25,6 +30,8 @@ export const Route = createFileRoute("/chat/$name")({
 function ChatPage() {
   const { name } = Route.useParams();
   const p = getProfile(name);
+
+  useEffect(() => { localStorage.setItem("betashine_selected_foreigner", p.name); }, [p.name]);
 
   return (
     <SiteShell>
