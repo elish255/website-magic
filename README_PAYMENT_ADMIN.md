@@ -18,3 +18,9 @@ Because registration must continue immediately to the payment page, turn off man
 
 ## 4. Flow
 Registration -> Payment (`251161660`) -> first `NIMELIPIA` click shows `FANYA MALIPO KISHA JARIBU TENA` -> second click allows the paid phone number -> Admin `/admin` sees the submission -> Activate Account -> user is sent to `/dashboard` -> select foreigner -> chat closes after 20 total messages without displaying a message counter.
+
+
+## Registration email and country
+Registration now requires the user's real email address. Supabase Auth uses this email for account login/authentication, while the selected East African country is saved in the profile's `county` field.
+
+The Admin Login uses the email/password of a Supabase Auth user that has been added to `public.admin_users`.

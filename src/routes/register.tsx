@@ -66,6 +66,42 @@ const EMPTY: Values = {
   confirmPassword: "",
 };
 
+
+function getSupabaseSignupError(error: { message?: string; code?: string; status?: number }) {
+  const raw = (error.message || "Unknown Supabase error").trim();
+  const lower = raw.toLowerCase();
+
+  if (/already registered|already exists|user already registered|duplicate/i.test(raw)) {
+    return "Email hii tayari imesajiliwa. Tumia email nyingine au ingia kwenye account yako.";
+  }
+
+  if (lower.includes("password") && (lower.includes("6") || lower.includes("short") || lower.includes("weak"))) {
+    return "Password haikubaliki. Tumia password yenye angalau herufi 6.";
+  }
+
+  if (lower.includes("invalid api key") || lower.includes("apikey") || lower.includes("invalid jwt")) {
+    return "Supabase API Key si sahihi. Hakikisha VITE_SUPABASE_PUBLISHABLE_KEY na VITE_SUPABASE_URL zimewekwa vizuri kwenye Environment Variables, kisha redeploy.";
+  }
+
+  if (lower.includes("failed to fetch") || lower.includes("network")) {
+    return "Website imeshindwa kuwasiliana na Supabase. Kagua VITE_SUPABASE_URL, API Key na internet, kisha redeploy.";
+  }
+
+  if (lower.includes("database error saving new user")) {
+    return "Supabase imeshindwa kutengeneza profile ya user baada ya Auth account. Angalia trigger handle_new_user na SQL ya profiles; error halisi: " + raw;
+  }
+
+  if (lower.includes("email not confirmed")) {
+    return "Email yako bado haijathibitishwa. Fungua email ya Supabase na uthibitishe kwanza.";
+  }
+
+  const extra = [error.code ? `code: ${error.code}` : "", error.status ? `status: ${error.status}` : ""]
+    .filter(Boolean)
+    .join(", ");
+
+  return `Usajili umeshindikana: ${raw}${extra ? ` (${extra})` : ""}`;
+}
+
 function RegisterPage() {
   const navigate = useNavigate();
   const [values, setValues] = useState<Values>(EMPTY);
@@ -99,32 +135,50 @@ function RegisterPage() {
     const data = parsed.data;
     const username = data.username.toLowerCase();
 
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: {
-          full_name: data.fullName,
-          username,
-          phone: data.phone,
-          county: data.county,
+    try {
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.fullName,
+            username,
+            phone: data.phone,
+            county: data.county,
+          },
         },
-      },
-    });
+      });
 
-    if (error) {
-      setLoading(false);
+      if (error) {
+        console.error("[BETASHINE registration] Supabase signUp error:", error);
+        setFormError(getSupabaseSignupError(error));
+        return;
+      }
+
+      // If email confirmation is enabled in Supabase, signUp can succeed
+      // without creating a browser session. Show a useful message instead
+      // of sending the user to a protected payment page where they are
+      // immediately redirected back to registration.
+      if (!authData.session) {
+        setFormError(
+          "Akaunti imetengenezwa, lakini Supabase inahitaji uthibitisho wa email. " +
+            "Angalia inbox ya email yako, thibitisha email, kisha ingia tena.",
+        );
+        return;
+      }
+
+      setValues(EMPTY);
+      navigate({ to: "/payment" });
+    } catch (caught) {
+      console.error("[BETASHINE registration] Unexpected error:", caught);
       setFormError(
-        /already registered|already exists|duplicate|exists/i.test(error.message)
-          ? "Email au username hii imetumika. Chagua nyingine."
-          : "Imeshindikana kujisajili. Jaribu tena.",
+        caught instanceof Error
+          ? `Kuna tatizo la mfumo: ${caught.message}`
+          : "Kuna tatizo la mfumo wakati wa kujisajili. Angalia Environment Variables za Supabase.",
       );
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-    setValues(EMPTY);
-    navigate({ to: "/payment" });
   }
 
   return (

@@ -1,6 +1,7 @@
 -- Run this SQL in Supabase SQL Editor once.
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
+  email text,
   full_name text not null,
   username text not null unique,
   phone text not null,
@@ -9,6 +10,8 @@ create table if not exists public.profiles (
   balance numeric(12,2) not null default 0,
   created_at timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists email text;
 
 create table if not exists public.payment_submissions (
   id uuid primary key default gen_random_uuid(),
@@ -25,6 +28,38 @@ create table if not exists public.admin_users (
 
 create index if not exists payment_submissions_user_id_idx on public.payment_submissions(user_id);
 create index if not exists payment_submissions_status_idx on public.payment_submissions(status);
+
+
+-- Automatically create a profile when a new Supabase Auth user registers.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, full_name, username, phone, county)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'full_name', 'User'),
+    lower(coalesce(new.raw_user_meta_data ->> 'username', split_part(coalesce(new.email, ''), '@', 1))),
+    coalesce(new.raw_user_meta_data ->> 'phone', ''),
+    coalesce(new.raw_user_meta_data ->> 'county', '')
+  )
+  on conflict (id) do update set
+    email = excluded.email,
+    full_name = excluded.full_name,
+    username = excluded.username,
+    phone = excluded.phone,
+    county = excluded.county;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
 
 alter table public.profiles enable row level security;
 alter table public.payment_submissions enable row level security;
