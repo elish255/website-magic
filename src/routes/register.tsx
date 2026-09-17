@@ -282,6 +282,12 @@ function RegisterPage() {
           </form>
 
           <Link
+            to="/login"
+            className="mt-3 block rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-center font-extrabold"
+          >
+            🔐 Tayari una account? Ingia
+          </Link>
+          <Link
             to="/"
             className="mt-3 block rounded-xl border border-border px-4 py-3 text-center font-bold"
           >

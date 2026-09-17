@@ -32,7 +32,7 @@ function DashboardPage() {
     let mounted = true;
     supabase.auth.getUser().then(async ({ data: auth }) => {
       if (!mounted) return;
-      if (!auth.user) { navigate({ to: "/register" }); return; }
+      if (!auth.user) { navigate({ to: "/login" }); return; }
       const { data } = await supabase.from("profiles").select("is_active,balance").eq("id", auth.user.id).maybeSingle();
       if (!data?.is_active) { navigate({ to: "/payment" }); return; }
       setActive(true); setBalance(Number(data.balance ?? 0));

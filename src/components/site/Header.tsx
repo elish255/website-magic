@@ -8,6 +8,7 @@ export function Header() {
   const { openWithdraw } = useSite();
   const [live, setLive] = useState(164_828);
   const [balance, setBalance] = useState(0);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -23,13 +24,15 @@ export function Header() {
   useEffect(() => {
     const load = async () => {
       const { data: auth } = await supabase.auth.getUser();
-      if (!auth.user) return;
+      if (!auth.user) { setLoggedIn(false); return; }
+      setLoggedIn(true);
       const { data } = await supabase.from("profiles").select("balance").eq("id", auth.user.id).maybeSingle();
       if (data) setBalance(Number(data.balance ?? 0));
     };
     load();
+    const { data: listener } = supabase.auth.onAuthStateChange(() => { load(); });
     const timer = setInterval(load, 7000);
-    return () => clearInterval(timer);
+    return () => { clearInterval(timer); listener.subscription.unsubscribe(); };
   }, []);
 
   return (
@@ -49,6 +52,12 @@ export function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <Link
+            to={loggedIn ? "/dashboard" : "/login"}
+            className="rounded-lg border border-teal/50 px-3 py-2 text-xs font-extrabold text-brand-foreground transition-transform active:scale-95"
+          >
+            {loggedIn ? "📊 Dashboard" : "🔐 Login"}
+          </Link>
           <button
             onClick={openWithdraw}
             className="cta-glow rounded-lg bg-primary px-3 py-2 text-xs font-extrabold text-primary-foreground transition-transform active:scale-95"

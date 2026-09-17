@@ -40,6 +40,17 @@ function Home() {
         </p>
       </section>
 
+      <div className="mx-auto max-w-3xl px-3 pt-5">
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/register" className="cta-glow rounded-xl bg-primary px-4 py-3 text-center text-sm font-extrabold text-primary-foreground">
+            📝 JISAJILI
+          </Link>
+          <Link to="/login" className="rounded-xl border-2 border-primary/50 bg-card px-4 py-3 text-center text-sm font-extrabold">
+            🔐 LOGIN
+          </Link>
+        </div>
+      </div>
+
       <div className="mx-auto max-w-3xl space-y-4 px-3 py-5">
         {feed.map((p) => (
           <article
