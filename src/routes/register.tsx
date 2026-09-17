@@ -13,7 +13,7 @@ export const Route = createFileRoute("/register")({
       {
         name: "description",
         content:
-          "Jisajili kwenye BetaShine: jaza jina, username, namba ya simu, mkoa na password ili uanze kuchat na wageni na kupata malipo.",
+          "Jisajili kwenye BetaShine: jaza jina, email, username, namba ya simu, nchi na password ili uanze kuchat na wageni na kupata malipo.",
       },
       { property: "og:title", content: "Jisajili — BETASHINE ORIGINAL" },
       {
@@ -32,6 +32,7 @@ export const Route = createFileRoute("/register")({
 const schema = z
   .object({
     fullName: z.string().trim().min(3, "Andika jina kamili").max(100),
+    email: z.string().trim().email("Andika email sahihi").max(120),
     username: z
       .string()
       .trim()
@@ -57,6 +58,7 @@ type Values = z.infer<typeof schema>;
 
 const EMPTY: Values = {
   fullName: "",
+  email: "",
   username: "",
   phone: "",
   county: "",
@@ -73,6 +75,9 @@ function RegisterPage() {
 
   const set = (key: keyof Values) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setValues((v) => ({ ...v, [key]: e.target.value }));
+
+  const setCountry = (e: React.ChangeEvent<HTMLSelectElement>) =>
+    setValues((v) => ({ ...v, county: e.target.value }));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -94,17 +99,24 @@ function RegisterPage() {
     const data = parsed.data;
     const username = data.username.toLowerCase();
 
-    const { data: signUp, error } = await supabase.auth.signUp({
-      email: `${username}@betashine.app`,
+    const { error } = await supabase.auth.signUp({
+      email: data.email,
       password: data.password,
-      options: { data: { full_name: data.fullName, username, phone: data.phone, county: data.county } },
+      options: {
+        data: {
+          full_name: data.fullName,
+          username,
+          phone: data.phone,
+          county: data.county,
+        },
+      },
     });
 
     if (error) {
       setLoading(false);
       setFormError(
-        /already registered|exists/i.test(error.message)
-          ? "Username hii imetumika. Chagua nyingine."
+        /already registered|already exists|duplicate|exists/i.test(error.message)
+          ? "Email au username hii imetumika. Chagua nyingine."
           : "Imeshindikana kujisajili. Jaribu tena.",
       );
       return;
@@ -134,6 +146,16 @@ function RegisterPage() {
               autoComplete="name"
             />
             <Field
+              label="Email"
+              value={values.email}
+              onChange={set("email")}
+              error={errors.email}
+              placeholder="juma@gmail.com"
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+            />
+            <Field
               label="Username"
               value={values.username}
               onChange={set("username")}
@@ -150,13 +172,29 @@ function RegisterPage() {
               type="tel"
               autoComplete="tel"
             />
-            <Field
-              label="County / Mkoa"
-              value={values.county}
-              onChange={set("county")}
-              error={errors.county}
-              placeholder="Dar es Salaam"
-            />
+            <label className="block">
+              <span className="mb-1 block text-sm font-bold">Nchi ya Afrika Mashariki</span>
+              <select
+                value={values.county}
+                onChange={setCountry}
+                className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-ring"
+              >
+                <option value="">Chagua nchi yako</option>
+                <option value="Burundi">🇧🇮 Burundi</option>
+                <option value="Democratic Republic of the Congo">🇨🇩 DR Congo</option>
+                <option value="Kenya">🇰🇪 Kenya</option>
+                <option value="Rwanda">🇷🇼 Rwanda</option>
+                <option value="Somalia">🇸🇴 Somalia</option>
+                <option value="South Sudan">🇸🇸 South Sudan</option>
+                <option value="Tanzania">🇹🇿 Tanzania</option>
+                <option value="Uganda">🇺🇬 Uganda</option>
+              </select>
+              {errors.county && (
+                <span className="mt-1 block text-xs font-semibold text-destructive">
+                  {errors.county}
+                </span>
+              )}
+            </label>
             <Field
               label="Password"
               value={values.password}

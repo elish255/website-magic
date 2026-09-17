@@ -14,7 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: { Row: { id: string; full_name: string; username: string; phone: string; county: string; is_active: boolean; balance: number; created_at: string }; Insert: { id: string; full_name: string; username: string; phone: string; county: string; is_active?: boolean; balance?: number; created_at?: string }; Update: Partial<{ id: string; full_name: string; username: string; phone: string; county: string; is_active: boolean; balance: number; created_at: string }> }
+      profiles: { Row: { id: string; email: string | null; full_name: string; username: string; phone: string; county: string; is_active: boolean; balance: number; created_at: string }; Insert: { id: string; email?: string | null; full_name: string; username: string; phone: string; county: string; is_active?: boolean; balance?: number; created_at?: string }; Update: Partial<{ id: string; email: string | null; full_name: string; username: string; phone: string; county: string; is_active: boolean; balance: number; created_at: string }> }
       payment_submissions: { Row: { id: string; user_id: string; paid_phone: string; status: string; created_at: string }; Insert: { id?: string; user_id: string; paid_phone: string; status?: string; created_at?: string }; Update: Partial<{ id: string; user_id: string; paid_phone: string; status: string; created_at: string }> }
       admin_users: { Row: { user_id: string; created_at: string }; Insert: { user_id: string; created_at?: string }; Update: Partial<{ user_id: string; created_at: string }> }
     }
