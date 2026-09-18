@@ -9,7 +9,7 @@ export const Route = createFileRoute("/payment")({
   component: PaymentPage,
 });
 
-const LIPA_NAMBA = "251161660";
+const LIPA_NAMBA = "251231096";
 
 function PaymentPage() {
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ function PaymentPage() {
               <strong className="text-3xl text-primary">{LIPA_NAMBA}</strong>
               <button onClick={() => navigator.clipboard?.writeText(LIPA_NAMBA)} className="rounded-lg border px-2 py-1 text-xs font-bold">Copy</button>
             </div>
-            <p className="mt-2 text-sm font-bold">Jina la Biashara: ASSERT BRIDGE</p>
+            <p className="mt-2 text-sm font-bold">Jina la Biashara: BETASHINE ORG</p>
           </div>
 
           <div className="mt-5 space-y-3">
