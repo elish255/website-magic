@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.betashineorg.online"
+        }
+      ],
+      "destination": "https://betashineorg.online/$1",
+      "permanent": true
+    }
+  ]
+}

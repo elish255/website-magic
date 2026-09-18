@@ -5,4 +5,5 @@ Disallow: /dashboard
 Disallow: /payment
 Disallow: /login
 Disallow: /register
+
 Sitemap: https://betashineorg.online/sitemap.xml
