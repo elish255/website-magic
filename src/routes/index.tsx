@@ -6,11 +6,11 @@ import { SITE_URL, SEO_KEYWORDS, USD_RATE } from "@/lib/site";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BETASHINE — Betashine Org | Connect, Learn, Earn" },
-      { name: "description", content: "BETASHINE (Betashine Org) ni jukwaa la Connect, Learn, Earn. Chat na foreigners, shiriki Kiswahili na utamaduni, na pata mapato kwa muda wako." },
+      { title: "BETASHINE ORIGINAL" },
+      { name: "description", content: "BETASHINE ORIGINAL ni jukwaa la mtandaoni linalowapa Watanzania fursa ya kupata mapato kwa kuzungumza na wageni. Jisajili, ongana na wageni na pata mapato kwa muda wako." },
       { name: "keywords", content: SEO_KEYWORDS },
       { name: "robots", content: "index, follow, max-image-preview:large" },
-      { property: "og:title", content: "BETASHINE — Betashine Org" },
+      { property: "og:title", content: "BETASHINE ORIGINAL" },
       { property: "og:description", content: "Connect, Learn, Earn. Chat na foreigners na pata mapato." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: SITE_URL },
