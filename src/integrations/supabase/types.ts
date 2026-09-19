@@ -22,6 +22,7 @@ export type Database = {
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean }
       admin_activate_user: { Args: { target_user_id: string; payment_id?: string | null }; Returns: boolean }
+      admin_reject_payment: { Args: { target_user_id: string; payment_id: string }; Returns: boolean }
       complete_chat: { Args: { earn_amount: number }; Returns: number }
     }
     Enums: { [_ in never]: never }

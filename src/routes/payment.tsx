@@ -19,6 +19,7 @@ function PaymentPage() {
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [latestStatus, setLatestStatus] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -33,8 +34,10 @@ function PaymentPage() {
   useEffect(() => {
     if (!userId) return;
     const check = async () => {
-      const { data } = await supabase.from("profiles").select("is_active").eq("id", userId).maybeSingle();
-      if (data?.is_active) navigate({ to: "/dashboard" });
+      const { data: profile } = await supabase.from("profiles").select("is_active").eq("id", userId).maybeSingle();
+      if (profile?.is_active) { navigate({ to: "/dashboard" }); return; }
+      const { data: payment } = await supabase.from("payment_submissions").select("status").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      setLatestStatus(payment?.status ?? null);
     };
     check();
     const timer = setInterval(check, 5000);
@@ -59,6 +62,7 @@ function PaymentPage() {
       if (error) {
         setMessage("Taarifa haijatumwa. Kama tayari umetuma, subiri admin akuthibitishe.");
       } else {
+        setLatestStatus("pending");
         setMessage("Taarifa ya malipo imetumwa. Subiri akaunti yako i-activate.");
       }
     });
@@ -107,6 +111,8 @@ function PaymentPage() {
             </div>
           )}
 
+          {latestStatus === "pending" && <div className="mt-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-center text-sm font-semibold">⏳ Malipo yako yapo kwenye review ya admin. Tafadhali subiri.</div>}
+          {latestStatus === "rejected" && <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-center text-sm font-semibold">❌ Malipo haya yamekataliwa. Hakikisha taarifa za malipo ni sahihi kisha tuma tena.</div>}
           {message && <p className="mt-4 rounded-xl bg-secondary px-4 py-3 text-center text-sm font-semibold">{message}</p>}
 
           <button onClick={handlePaidClick} disabled={saving} className="cta-glow mt-5 w-full rounded-xl bg-primary px-4 py-3 font-extrabold text-primary-foreground disabled:opacity-60">
