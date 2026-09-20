@@ -62,20 +62,33 @@ function PaymentPage() {
     const accessToken = sessionData.session?.access_token;
     if (!accessToken) throw new Error("Login session imekwisha. Ingia tena.");
 
-    const response = await fetch("/api/fimipay", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(body),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 22000);
 
-    const data = await response.json().catch(() => null);
-    if (!response.ok || !data) {
-      throw new Error(data?.error || "Server imeshindwa kushughulikia malipo.");
+    try {
+      const response = await fetch("/api/fimipay", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data) {
+        throw new Error(data?.error || "Server imeshindwa kushughulikia malipo.");
+      }
+      return data;
+    } catch (error) {
+      if (error && typeof error === "object" && "name" in error && error.name === "AbortError") {
+        throw new Error("Server haijajibu ndani ya sekunde 22. Angalia Vercel Logs kisha jaribu tena.");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-    return data;
   }
 
   async function pollAutomaticPayment(paymentId: string) {

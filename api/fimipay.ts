@@ -83,9 +83,20 @@ function isFailed(status?: string) {
   return !!status && ["cancelled", "usercancelled", "rejected", "failed", "failure", "expired"].includes(status);
 }
 
-async function fimipay(url: string, body: unknown) {
+async function fimipay(url: string, body: unknown, timeoutMs: number) {
   const apiKey = required("FIMIPAY_API_KEY", FIMIPAY_API_KEY);
-  const response = await fetch(url, {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const startedAt = Date.now();
+
+  try {
+    console.log("FimiPay request started", {
+      endpoint: url,
+      timeoutMs,
+      action: url === CREATE_URL ? "create_order" : "order_status",
+    });
+
+    const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -94,6 +105,7 @@ async function fimipay(url: string, body: unknown) {
       "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
+    signal: controller.signal,
   });
   const text = await response.text();
   let payload: Record<string, unknown>;
@@ -103,9 +115,37 @@ async function fimipay(url: string, body: unknown) {
     payload = { raw: text };
   }
   if (!response.ok) {
+    console.error("FimiPay HTTP error", {
+      status: response.status,
+      durationMs: Date.now() - startedAt,
+      message: typeof payload.message === "string" ? payload.message : undefined,
+    });
     throw new Error(`FimiPay HTTP ${response.status}: ${text.slice(0, 500)}`);
   }
+
+  console.log("FimiPay response received", {
+    httpStatus: response.status,
+    durationMs: Date.now() - startedAt,
+    status: typeof payload.status === "string" ? payload.status : undefined,
+    message: typeof payload.message === "string" ? payload.message : undefined,
+    orderId: extractOrderId(payload),
+    paymentStatus: extractStatus(payload),
+  });
+
   return payload;
+  } catch (error) {
+    if (error && typeof error === "object" && "name" in error && error.name === "AbortError") {
+      console.error("FimiPay request timed out", {
+        endpoint: url,
+        timeoutMs,
+        durationMs: Date.now() - startedAt,
+      });
+      throw new Error(`FimiPay haijajibu ndani ya sekunde ${Math.ceil(timeoutMs / 1000)}. Jaribu tena.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function getAuthenticatedUser(request: Request) {
@@ -154,7 +194,7 @@ async function main(request: Request) {
       amount: FIMIPAY_AMOUNT,
       currency: FIMIPAY_CURRENCY,
       payment_method: "mobile",
-    });
+    }, 15000);
 
     if (String(provider.status || "").toLowerCase() !== "success") {
       throw new Error(String(provider.message || "FimiPay imeshindwa kuanzisha malipo."));
@@ -210,7 +250,7 @@ async function main(request: Request) {
     if (error || !payment) throw new Error("Payment not found");
     if (payment.status === "paid") return { ok: true, paid: true, status: "paid", redirect: "/dashboard" };
 
-    const provider = await fimipay(STATUS_URL, { order_id: payment.order_id });
+    const provider = await fimipay(STATUS_URL, { order_id: payment.order_id }, 10000);
     const providerStatus = extractStatus(provider) || "pending";
 
     if (isPaid(providerStatus)) {
