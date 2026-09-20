@@ -1,7 +1,1 @@
 project_id = "duodlxfbfqclvbctwkwp"
-
-# The browser sends an unauthenticated CORS preflight (OPTIONS) before the
-# authenticated POST. JWT authentication is enforced inside the function
-# after the preflight, so Supabase Gateway must not reject OPTIONS first.
-[functions.fimipay-payment]
-verify_jwt = false

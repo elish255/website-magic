@@ -57,17 +57,39 @@ function PaymentPage() {
     if (pollRef.current) clearInterval(pollRef.current);
   }, []);
 
+  async function callFimiPayApi(body: Record<string, unknown>) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) throw new Error("Login session imekwisha. Ingia tena.");
+
+    const response = await fetch("/api/fimipay", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data) {
+      throw new Error(data?.error || "Server imeshindwa kushughulikia malipo.");
+    }
+    return data;
+  }
+
   async function pollAutomaticPayment(paymentId: string) {
     if (pollRef.current) clearInterval(pollRef.current);
     const check = async () => {
-      const { data, error } = await supabase.functions.invoke("fimipay-payment", {
-        body: { action: "status", paymentId },
-      });
-      if (error || !data) return;
-      setAutoStatus(String(data.status ?? data.paymentStatus ?? "pending"));
-      if (data.paid) {
-        if (pollRef.current) clearInterval(pollRef.current);
-        navigate({ to: "/dashboard" });
+      try {
+        const data = await callFimiPayApi({ action: "status", paymentId });
+        setAutoStatus(String(data.status ?? data.paymentStatus ?? "pending"));
+        if (data.paid) {
+          if (pollRef.current) clearInterval(pollRef.current);
+          navigate({ to: "/dashboard" });
+        }
+      } catch (error) {
+        console.error("FimiPay status check failed", error);
       }
     };
     await check();
@@ -83,10 +105,7 @@ function PaymentPage() {
     setMessage(null);
     setCheckoutUrl(null);
     try {
-      const { data, error } = await supabase.functions.invoke("fimipay-payment", {
-        body: { action: "create", phone: phone.trim() },
-      });
-      if (error) throw new Error(error.message);
+      const data = await callFimiPayApi({ action: "create", phone: phone.trim() });
       if (!data?.ok) throw new Error(data?.error || "FimiPay imeshindwa kuanzisha malipo.");
       if (data.alreadyActive || data.paid) {
         navigate({ to: "/dashboard" });
