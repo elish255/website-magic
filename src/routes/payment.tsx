@@ -83,7 +83,7 @@ function PaymentPage() {
       return data;
     } catch (error) {
       if (error && typeof error === "object" && "name" in error && error.name === "AbortError") {
-        throw new Error("Server haijajibu ndani ya sekunde 22. Angalia Vercel Logs kisha jaribu tena.");
+        throw new Error("Imeshindikana kutuma Push. Jaribu tena.");
       }
       throw error;
     } finally {
@@ -111,11 +111,11 @@ function PaymentPage() {
 
   async function startAutomaticPayment() {
     if (!phone.trim()) {
-      setMessage("Weka namba ya simu utakayotumia kulipia.");
+      setMessage("Weka namba ya simu ya M-Pesa/Mixx/Airtel Money/HaloPesa unayotaka Kulipia.");
       return;
     }
     setSaving(true);
-    setMessage(null);
+    setMessage("Push imetumwa Weka namba ya Siri kuthibisha Malipo");
     setCheckoutUrl(null);
     try {
       const data = await callFimiPayApi({ action: "create", phone: phone.trim() });
@@ -127,7 +127,7 @@ function PaymentPage() {
       setAutoPaymentId(data.paymentId ?? null);
       setAutoStatus(data.status ?? "pending");
       setCheckoutUrl(data.checkoutUrl ?? null);
-      setMessage("Push ya malipo imetumwa. Kamilisha malipo kwenye simu yako; akaunti ita-activate yenyewe.");
+      setMessage("Push imetumwa Weka namba ya Siri kuthibisha Malipo");
       if (data.paymentId) await pollAutomaticPayment(data.paymentId);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Imeshindikana kuanzisha malipo ya automatic.");
@@ -180,10 +180,10 @@ function PaymentPage() {
             <div className="mt-5 rounded-2xl border border-primary/30 bg-primary/5 p-5">
               <div className="text-center text-5xl">⚡</div>
               <h2 className="mt-3 text-center text-xl font-extrabold">LIPA KWA PUSH</h2>
-              <p className="mt-2 text-center text-sm text-muted-foreground">Weka namba ya simu ya M-Pesa/Mixx/Airtel Money/HaloPesa. FimiPay itaanzisha malipo na mfumo utaangalia status automatically.</p>
+              <p className="mt-2 text-center text-sm text-muted-foreground">Weka namba ya simu ya M-Pesa/Mixx/Airtel Money/HaloPesa unayotaka Kulipia.</p>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" placeholder="0712345678" className="mt-4 w-full rounded-xl border border-input bg-background px-3 py-3 outline-none" />
               <button onClick={startAutomaticPayment} disabled={saving || !phone.trim()} className="cta-glow mt-3 w-full rounded-xl bg-primary px-4 py-3 font-extrabold text-primary-foreground disabled:opacity-60">
-                {saving ? "Inaanzisha malipo..." : `⚡ LIPA TZS ${PRICE.toLocaleString()} KWA PUSH`}
+                {saving ? "Inatuma Push..." : `⚡ LIPA TZS ${PRICE.toLocaleString()} KWA PUSH`}
               </button>
 
               {autoPaymentId && <div className="mt-4 rounded-xl border border-border bg-background p-3 text-center text-sm">
