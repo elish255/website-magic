@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       profiles: { Row: { id: string; email: string | null; full_name: string; username: string; phone: string; county: string; is_active: boolean; balance: number; created_at: string }; Insert: { id: string; email?: string | null; full_name: string; username: string; phone: string; county: string; is_active?: boolean; balance?: number; created_at?: string }; Update: Partial<{ id: string; email: string | null; full_name: string; username: string; phone: string; county: string; is_active: boolean; balance: number; created_at: string }> }
       payment_submissions: { Row: { id: string; user_id: string; paid_phone: string; status: string; created_at: string }; Insert: { id?: string; user_id: string; paid_phone: string; status?: string; created_at?: string }; Update: Partial<{ id: string; user_id: string; paid_phone: string; status: string; created_at: string }> }
+      automatic_payments: { Row: { id: string; user_id: string; order_id: string | null; amount: number; currency: string; phone: string; status: string; checkout_url: string | null; provider_status: string | null; provider_response: Json | null; created_at: string; updated_at: string }; Insert: { id?: string; user_id: string; order_id?: string | null; amount?: number; currency?: string; phone: string; status?: string; checkout_url?: string | null; provider_status?: string | null; provider_response?: Json | null; created_at?: string; updated_at?: string }; Update: Partial<{ id: string; user_id: string; order_id: string | null; amount: number; currency: string; phone: string; status: string; checkout_url: string | null; provider_status: string | null; provider_response: Json | null; created_at: string; updated_at: string }> }
       admin_users: { Row: { user_id: string; created_at: string }; Insert: { user_id: string; created_at?: string }; Update: Partial<{ user_id: string; created_at: string }> }
     }
     Views: { [_ in never]: never }
@@ -24,6 +25,7 @@ export type Database = {
       admin_activate_user: { Args: { target_user_id: string; payment_id?: string | null }; Returns: boolean }
       admin_reject_payment: { Args: { target_user_id: string; payment_id: string }; Returns: boolean }
       complete_chat: { Args: { earn_amount: number }; Returns: number }
+      activate_user_from_auto_payment: { Args: { target_user_id: string; auto_payment_id: string }; Returns: boolean }
     }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }
