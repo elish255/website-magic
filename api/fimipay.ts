@@ -1,3 +1,4 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -9,11 +10,19 @@ const FIMIPAY_CURRENCY = process.env.FIMIPAY_CURRENCY || "TZS";
 const CREATE_URL = process.env.FIMIPAY_CREATE_PAYMENT_URL || "https://fimipay.com/api/v1/payment/create_order";
 const STATUS_URL = process.env.FIMIPAY_ORDER_STATUS_URL || "https://fimipay.com/api/v1/payment/order_status";
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8" },
-  });
+type JsonObject = Record<string, unknown>;
+type VercelRequest = IncomingMessage & { body?: unknown };
+type VercelResponse = ServerResponse & {
+  statusCode: number;
+  json: (body: unknown) => void;
+};
+
+function sendJson(res: VercelResponse, body: unknown, status = 200) {
+  const payload = JSON.stringify(body);
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  res.end(payload);
 }
 
 function required(name: string, value: string | undefined) {
@@ -33,11 +42,11 @@ function firstString(...values: unknown[]) {
   return values.find((v) => typeof v === "string" && v.trim()) as string | undefined;
 }
 
-function asObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+function asObject(value: unknown): JsonObject {
+  return value && typeof value === "object" ? value as JsonObject : {};
 }
 
-function extractOrderId(payload: Record<string, unknown>) {
+function extractOrderId(payload: JsonObject) {
   const data = asObject(payload.data);
   return firstString(
     payload.order_id,
@@ -49,7 +58,7 @@ function extractOrderId(payload: Record<string, unknown>) {
   );
 }
 
-function extractStatus(payload: Record<string, unknown>) {
+function extractStatus(payload: JsonObject) {
   const data = asObject(payload.data);
   return firstString(
     data.payment_status,
@@ -59,7 +68,7 @@ function extractStatus(payload: Record<string, unknown>) {
   )?.toLowerCase();
 }
 
-function extractCheckoutUrl(payload: Record<string, unknown>) {
+function extractCheckoutUrl(payload: JsonObject) {
   const data = asObject(payload.data);
   return firstString(
     payload.checkout_url,
@@ -97,42 +106,44 @@ async function fimipay(url: string, body: unknown, timeoutMs: number) {
     });
 
     const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      "User-Agent": "FimiPay-SDK/1.0",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(body),
-    signal: controller.signal,
-  });
-  const text = await response.text();
-  let payload: Record<string, unknown>;
-  try {
-    payload = JSON.parse(text) as Record<string, unknown>;
-  } catch {
-    payload = { raw: text };
-  }
-  if (!response.ok) {
-    console.error("FimiPay HTTP error", {
-      status: response.status,
-      durationMs: Date.now() - startedAt,
-      message: typeof payload.message === "string" ? payload.message : undefined,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "FimiPay-SDK/1.0",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
     });
-    throw new Error(`FimiPay HTTP ${response.status}: ${text.slice(0, 500)}`);
-  }
 
-  console.log("FimiPay response received", {
-    httpStatus: response.status,
-    durationMs: Date.now() - startedAt,
-    status: typeof payload.status === "string" ? payload.status : undefined,
-    message: typeof payload.message === "string" ? payload.message : undefined,
-    orderId: extractOrderId(payload),
-    paymentStatus: extractStatus(payload),
-  });
+    const text = await response.text();
+    let payload: JsonObject;
+    try {
+      payload = JSON.parse(text) as JsonObject;
+    } catch {
+      payload = { raw: text };
+    }
 
-  return payload;
+    if (!response.ok) {
+      console.error("FimiPay HTTP error", {
+        status: response.status,
+        durationMs: Date.now() - startedAt,
+        message: typeof payload.message === "string" ? payload.message : undefined,
+      });
+      throw new Error(`FimiPay HTTP ${response.status}: ${text.slice(0, 500)}`);
+    }
+
+    console.log("FimiPay response received", {
+      httpStatus: response.status,
+      durationMs: Date.now() - startedAt,
+      status: typeof payload.status === "string" ? payload.status : undefined,
+      message: typeof payload.message === "string" ? payload.message : undefined,
+      orderId: extractOrderId(payload),
+      paymentStatus: extractStatus(payload),
+    });
+
+    return payload;
   } catch (error) {
     if (error && typeof error === "object" && "name" in error && error.name === "AbortError") {
       console.error("FimiPay request timed out", {
@@ -148,8 +159,34 @@ async function fimipay(url: string, body: unknown, timeoutMs: number) {
   }
 }
 
-async function getAuthenticatedUser(request: Request) {
-  const auth = request.headers.get("authorization");
+async function getRequestBody(req: VercelRequest): Promise<JsonObject> {
+  if (req.body && typeof req.body === "object") return req.body as JsonObject;
+  if (typeof req.body === "string") {
+    try { return JSON.parse(req.body) as JsonObject; } catch { return {}; }
+  }
+
+  return new Promise((resolve, reject) => {
+    let raw = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk: string) => {
+      raw += chunk;
+      if (raw.length > 1_000_000) reject(new Error("Request body too large"));
+    });
+    req.on("end", () => {
+      if (!raw.trim()) return resolve({});
+      try { resolve(JSON.parse(raw) as JsonObject); } catch { reject(new Error("Invalid JSON body")); }
+    });
+    req.on("error", reject);
+  });
+}
+
+function getAuthorization(req: VercelRequest) {
+  const value = req.headers.authorization || req.headers.Authorization;
+  return Array.isArray(value) ? value[0] : value;
+}
+
+async function getAuthenticatedUser(req: VercelRequest) {
+  const auth = getAuthorization(req);
   if (!auth?.startsWith("Bearer ")) throw new Error("Login session is required");
   const token = auth.slice(7).trim();
 
@@ -168,10 +205,10 @@ function adminClient() {
   );
 }
 
-async function main(request: Request) {
-  const user = await getAuthenticatedUser(request);
-  const body = await request.json().catch(() => ({})) as { action?: string; phone?: string; paymentId?: string };
-  const action = body.action || "create";
+async function main(req: VercelRequest) {
+  const user = await getAuthenticatedUser(req);
+  const body = await getRequestBody(req);
+  const action = typeof body.action === "string" ? body.action : "create";
   const admin = adminClient();
 
   const { data: profile, error: profileError } = await admin
@@ -260,6 +297,7 @@ async function main(request: Request) {
       });
       if (activationError) throw activationError;
       await admin.from("automatic_payments").update({
+        status: activated ? "paid" : "processing",
         provider_status: providerStatus,
         provider_response: provider,
         updated_at: new Date().toISOString(),
@@ -281,15 +319,23 @@ async function main(request: Request) {
   throw new Error("Unknown action");
 }
 
-export default async function handler(request: Request) {
-  if (request.method === "OPTIONS") return new Response(null, { status: 204 });
-  if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    return res.end();
+  }
+
+  if (req.method !== "POST") return sendJson(res, { ok: false, error: "Method not allowed" }, 405);
 
   try {
-    return json(await main(request));
+    const result = await main(req);
+    return sendJson(res, result, 200);
   } catch (error) {
     console.error("FimiPay API error:", error);
-    return json({
+    return sendJson(res, {
       ok: false,
       error: error instanceof Error ? error.message : "Internal server error",
     }, 400);
