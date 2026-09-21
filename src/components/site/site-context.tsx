@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Header } from "./Header";
 import { Ticker } from "./Ticker";
 import { Footer } from "./Footer";
@@ -14,6 +14,7 @@ export const useSite = () => useContext(Ctx);
 
 export function SiteShell({ children }: { children: ReactNode }) {
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  useEffect(() => { const open = () => setWithdrawOpen(true); window.addEventListener("betashine:open-withdraw", open); return () => window.removeEventListener("betashine:open-withdraw", open); }, []);
 
   return (
     <Ctx.Provider value={{ openWithdraw: () => setWithdrawOpen(true) }}>

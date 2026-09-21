@@ -13,7 +13,7 @@ This build fixes the payment button hanging forever on **"Inaanzisha malipo..."*
 Set these in the Vercel project:
 
 - `FIMIPAY_API_KEY` = your live FimiPay secret key
-- `FIMIPAY_AMOUNT` = `14500`
+- `FIMIPAY_AMOUNT` = `16000`
 - `FIMIPAY_CURRENCY` = `TZS`
 - `SUPABASE_URL` = your Supabase project URL
 - `SUPABASE_PUBLISHABLE_KEY` = your Supabase publishable/anon key

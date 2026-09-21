@@ -3,7 +3,7 @@ create table if not exists public.automatic_payments (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
   order_id text unique,
-  amount numeric(12,2) not null default 14500,
+  amount numeric(12,2) not null default 16000,
   currency text not null default 'TZS',
   phone text not null,
   status text not null default 'pending' check (status in ('pending','processing','paid','failed','cancelled','expired')),

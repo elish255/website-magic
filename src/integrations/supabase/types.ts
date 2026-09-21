@@ -14,10 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: { Row: { id: string; email: string | null; full_name: string; username: string; phone: string; county: string; is_active: boolean; balance: number; created_at: string }; Insert: { id: string; email?: string | null; full_name: string; username: string; phone: string; county: string; is_active?: boolean; balance?: number; created_at?: string }; Update: Partial<{ id: string; email: string | null; full_name: string; username: string; phone: string; county: string; is_active: boolean; balance: number; created_at: string }> }
+      profiles: { Row: { id: string; email: string | null; full_name: string; username: string; phone: string; county: string; is_active: boolean; is_banned: boolean; balance: number; expenses: number; bonus: number; created_at: string }; Insert: { id: string; email?: string | null; full_name: string; username: string; phone: string; county: string; is_active?: boolean; is_banned?: boolean; balance?: number; expenses?: number; bonus?: number; created_at?: string }; Update: Partial<{ id: string; email: string | null; full_name: string; username: string; phone: string; county: string; is_active: boolean; is_banned: boolean; balance: number; expenses: number; bonus: number; created_at: string }> }
       payment_submissions: { Row: { id: string; user_id: string; paid_phone: string; status: string; created_at: string }; Insert: { id?: string; user_id: string; paid_phone: string; status?: string; created_at?: string }; Update: Partial<{ id: string; user_id: string; paid_phone: string; status: string; created_at: string }> }
       automatic_payments: { Row: { id: string; user_id: string; order_id: string | null; amount: number; currency: string; phone: string; status: string; checkout_url: string | null; provider_status: string | null; provider_response: Json | null; created_at: string; updated_at: string }; Insert: { id?: string; user_id: string; order_id?: string | null; amount?: number; currency?: string; phone: string; status?: string; checkout_url?: string | null; provider_status?: string | null; provider_response?: Json | null; created_at?: string; updated_at?: string }; Update: Partial<{ id: string; user_id: string; order_id: string | null; amount: number; currency: string; phone: string; status: string; checkout_url: string | null; provider_status: string | null; provider_response: Json | null; created_at: string; updated_at: string }> }
       admin_users: { Row: { user_id: string; created_at: string }; Insert: { user_id: string; created_at?: string }; Update: Partial<{ user_id: string; created_at: string }> }
+      notifications: { Row: { id: string; user_id: string | null; title: string; message: string; created_at: string; dismissed_at: string | null }; Insert: { id?: string; user_id?: string | null; title: string; message: string; created_at?: string; dismissed_at?: string | null }; Update: Partial<{ id: string; user_id: string | null; title: string; message: string; created_at: string; dismissed_at: string | null }> }
+      withdrawal_requests: { Row: { id: string; user_id: string; amount: number; phone: string; status: string; admin_note: string | null; created_at: string; updated_at: string }; Insert: { id?: string; user_id: string; amount: number; phone: string; status?: string; admin_note?: string | null; created_at?: string; updated_at?: string }; Update: Partial<{ id: string; user_id: string; amount: number; phone: string; status: string; admin_note: string | null; created_at: string; updated_at: string }> }
     }
     Views: { [_ in never]: never }
     Functions: {
@@ -26,6 +28,9 @@ export type Database = {
       admin_reject_payment: { Args: { target_user_id: string; payment_id: string }; Returns: boolean }
       complete_chat: { Args: { earn_amount: number }; Returns: number }
       activate_user_from_auto_payment: { Args: { target_user_id: string; auto_payment_id: string }; Returns: boolean }
+      admin_set_user_status: { Args: { target_user_id: string; active: boolean; banned: boolean }; Returns: boolean }
+      admin_adjust_balance: { Args: { target_user_id: string; amount_delta: number; new_expenses?: number | null; new_bonus?: number | null }; Returns: number }
+      admin_review_withdrawal: { Args: { request_id: string; next_status: string; note?: string | null }; Returns: boolean }
     }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }

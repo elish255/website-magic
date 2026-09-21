@@ -6,7 +6,7 @@ The browser now calls `/api/fimipay`. The FimiPay secret key stays server-side i
 Set these for the Production environment:
 
 - `FIMIPAY_API_KEY` = your new LIVE FimiPay secret key
-- `FIMIPAY_AMOUNT` = `14500`
+- `FIMIPAY_AMOUNT` = `16000`
 - `FIMIPAY_CURRENCY` = `TZS`
 - `SUPABASE_URL` = your Supabase project URL
 - `SUPABASE_PUBLISHABLE_KEY` = your Supabase publishable key

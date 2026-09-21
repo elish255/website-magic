@@ -58,7 +58,7 @@ function LoginPage() {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("is_active")
+      .select("is_active,is_banned")
       .eq("id", data.user.id)
       .maybeSingle();
 
@@ -68,7 +68,10 @@ function LoginPage() {
       return;
     }
 
-    if (profile?.is_active) navigate({ to: "/dashboard" });
+    if (profile?.is_banned) {
+      await supabase.auth.signOut();
+      setError("Account yako imezuiwa. Wasiliana na admin kwa msaada.");
+    } else if (profile?.is_active) navigate({ to: "/dashboard" });
     else navigate({ to: "/payment" });
     setLoading(false);
   }

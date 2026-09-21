@@ -25,7 +25,7 @@ Set these in Supabase Edge Functions → Secrets:
 
 ```text
 FIMIPAY_API_KEY=YOUR_NEW_LIVE_SECRET_KEY
-FIMIPAY_AMOUNT=14500
+FIMIPAY_AMOUNT=16000
 FIMIPAY_CURRENCY=TZS
 SITE_URL=https://betashineorg.online
 ```
@@ -48,7 +48,7 @@ The Edge Function sends:
   "buyer_email": "customer@example.com",
   "buyer_name": "John Doe",
   "buyer_phone": "255682812345",
-  "amount": 14500,
+  "amount": 16000,
   "currency": "TZS",
   "payment_method": "mobile"
 }
