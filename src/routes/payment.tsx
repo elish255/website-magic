@@ -42,9 +42,12 @@ function PaymentPage() {
   useEffect(() => {
     if (!userId) return;
     const check = async () => {
-      const { data: profile } = await supabase.from("profiles").select("is_active,is_banned,phone").eq("id", userId).maybeSingle();
+      const { data: profile } = await supabase.from("profiles").select("is_active,phone").eq("id", userId).maybeSingle();
       if (profile?.phone && !phone) setPhone(profile.phone);
-      if (profile?.is_banned) { setMessage("Account yako imezuiwa. Wasiliana na admin."); return; }
+      // is_banned is an optional admin column; check it separately so an older
+      // database schema does not make the whole payment page fail with HTTP 400.
+      const { data: securityProfile, error: securityError } = await supabase.from("profiles").select("is_banned").eq("id", userId).maybeSingle();
+      if (!securityError && securityProfile?.is_banned) { setMessage("Account yako imezuiwa. Wasiliana na admin."); return; }
       if (profile?.is_active) { navigate({ to: "/dashboard" }); return; }
       const { data: payment } = await supabase.from("payment_submissions").select("status").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle();
       setLatestStatus(payment?.status ?? null);

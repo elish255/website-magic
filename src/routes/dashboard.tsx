@@ -23,13 +23,53 @@ function DashboardPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   async function loadUser(userId: string) {
-    const { data, error } = await supabase.from("profiles").select("username,full_name,balance,expenses,bonus,is_active,is_banned,phone").eq("id", userId).maybeSingle();
-    if (error || !data) return;
-    if (data.is_banned) { setActive(false); return; }
+    // Keep the dashboard compatible with databases that have not yet received
+    // the optional admin/notification migration. The previous query requested
+    // new columns in the same request, so PostgREST returned HTTP 400 and the
+    // page stayed on “Inapakia dashboard...”.
+    const base = await supabase
+      .from("profiles")
+      .select("username,full_name,balance,is_active,phone")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (base.error || !base.data) {
+      console.error("Dashboard profile load failed", base.error);
+      setActive(false);
+      return;
+    }
+
+    const data = base.data as { username: string; full_name: string; balance: number; is_active: boolean; phone: string };
     if (!data.is_active) { navigate({ to: "/payment" }); return; }
-    setProfile(data as ProfileRow); setActive(true);
-    const { data: notes } = await supabase.from("notifications").select("id,title,message,created_at").eq("user_id", userId).is("dismissed_at", null).order("created_at", { ascending: false }).limit(10);
-    setNotifications((notes ?? []) as Notification[]);
+
+    // These columns are supplied by the dashboard/admin migration. If the
+    // migration has not been applied yet, use safe defaults so the dashboard
+    // still opens instead of failing completely.
+    let isBanned = false;
+    let expenses = 0;
+    let bonus = 0;
+    const enhanced = await supabase.from("profiles").select("is_banned,expenses,bonus").eq("id", userId).maybeSingle();
+    if (!enhanced.error && enhanced.data) {
+      isBanned = Boolean(enhanced.data.is_banned);
+      expenses = Number(enhanced.data.expenses ?? 0);
+      bonus = Number(enhanced.data.bonus ?? 0);
+    }
+    if (isBanned) { setActive(false); return; }
+
+    setProfile({ ...data, is_banned: false, expenses, bonus });
+    setActive(true);
+
+    // Notifications are optional until the migration is applied. A missing
+    // table/column must not block the dashboard from rendering.
+    const notes = await supabase
+      .from("notifications")
+      .select("id,title,message,created_at")
+      .eq("user_id", userId)
+      .is("dismissed_at", null)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (!notes.error) setNotifications((notes.data ?? []) as Notification[]);
+    else console.warn("Notifications unavailable", notes.error.message);
   }
 
   useEffect(() => {
